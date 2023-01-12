@@ -1,4 +1,3 @@
-// import { OrbitControls } from "./OrbitControls.js";
 
 let camera,scene, renderer;
 let directionalLight1,spotLight, ambientLight; 
@@ -26,7 +25,7 @@ function initialize() {
     scene.fog = new THREE.FogExp2(0xFFFFFF, 0.01);
     //Create a camera and define the perspective -> Orthographic or perspective
     camera = new THREE.PerspectiveCamera( 60, width/height, 0.1, 1000 );
-    camera.position.set(amount, amount, amount);
+    camera.position.set(amount + 15, amount + 15, amount + 15);
     camera.lookAt(0, 0, 0);
     //Initialize the renderer
     renderer = new THREE.WebGLRenderer({
@@ -37,20 +36,6 @@ function initialize() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     threejsCanvas.appendChild( renderer.domElement );
 
-    //#region Orbit Controls
-    //Initializing orbit controls & adding listeners...
-    // orbitControls = new OrbitControls(camera, renderer.domElement);
-    // orbitControls.listenToKeyEvents(window)
-    // orbitControls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-    // orbitControls.enableZoom = true;
-    // orbitControls.enablePan = false;
-    // orbitControls.minDistance = 10;
-    // orbitControls.maxDistance = 100;
-    //#endregion
-
-    //#region Initializing GUI elements
-    
-    //#endregion
     //Creating axes helpers...
     const axes = new THREE.AxesHelper(10);
     scene.add(axes);
@@ -116,7 +101,7 @@ function initialize() {
     const gui = new dat.GUI();
     const options = 
     {
-        sphereColor : '#6C0BA9',
+        objectColor : '#6C0BA9',
         positionX : 0,
         positionY : 0,
         positionZ : 0,
@@ -147,7 +132,7 @@ function initialize() {
     };
 
     var generalOptions = gui.addFolder('General Options');
-    generalOptions.addColor(options, 'sphereColor').onChange(function(e) { mesh.material.color.set(e); });
+    generalOptions.addColor(options, 'objectColor').onChange(function(e) { mesh.material.color.set(e); });
     generalOptions.add(options, 'speed', 0, 1).onChange(function(e) { speed = e; });
     var positionFolder = gui.addFolder('Mesh Position')
     positionFolder.add(options, 'positionX', -100.0, 100.0).onChange(function(e) { mesh.position.x = e; });
