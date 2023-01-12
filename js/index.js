@@ -2,7 +2,6 @@
 let camera,scene, renderer;
 let directionalLight1,spotLight, ambientLight; 
 let showCube = false, showSphere = false, showMultiMesh = true;
-const threejsCanvas = document.querySelector('#threejs-canvas');
 const mouse = new THREE.Vector2(1, 1);
 const material = new THREE.MeshToonMaterial( {color: 0x6C0BA9} );
 const raycaster = new THREE.Raycaster();
@@ -24,7 +23,7 @@ function initialize() {
     //scene.fog = new THREE.Fog(0XFFFFF, 0, 150);
     scene.fog = new THREE.FogExp2(0xFFFFFF, 0.01);
     //Create a camera and define the perspective -> Orthographic or perspective
-    camera = new THREE.PerspectiveCamera( 60, width/height, 0.1, 1000 );
+    camera = new THREE.PerspectiveCamera( 70, width/height, 0.1, 1000 );
     camera.position.set(amount + 15, amount + 15, amount + 15);
     camera.lookAt(0, 0, 0);
     //Initialize the renderer
@@ -34,7 +33,7 @@ function initialize() {
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
-    threejsCanvas.appendChild( renderer.domElement );
+    document.body.appendChild( renderer.domElement );
 
     //Creating axes helpers...
     const axes = new THREE.AxesHelper(10);
@@ -261,10 +260,7 @@ function onMouseMove( event ) {
 }
 
 function onWindowResize() {
-    width = threejsCanvas.offsetWidth;
-    height = threejsCanvas.offsetHeight;
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    camera.aspect = width / height;
+    camera.aspect =  window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
