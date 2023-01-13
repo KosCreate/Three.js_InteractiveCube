@@ -1,19 +1,22 @@
+import { OrbitControls } from "./OrbitControls.js";
 
 let camera,scene, renderer;
-let directionalLight1,spotLight, ambientLight; 
+let directionalLight1,spotLight, orbitControls,ambientLight; 
 let showCube = false, showSphere = false, showMultiMesh = true;
-const mouse = new THREE.Vector2(1, 1);
 const material = new THREE.MeshToonMaterial( {color: 0x6C0BA9} );
-const raycaster = new THREE.Raycaster();
 let mesh;
-const objects = [];
+let createdMesh = false;
 const amount = parseInt(window.location.search.slice(1)) || 10;
 const count = Math.pow(amount, 3);
 const color = new THREE.Color();
 const white = new THREE.Color().setHex( 0xffffff );
 let speed = 0.01, step = 0;
+const gui = new dat.GUI();
+
 initialize();
 animate();
+updatedSettings();
+
 
 function initialize() {
     //Create a scene...
@@ -26,6 +29,7 @@ function initialize() {
     camera = new THREE.PerspectiveCamera( 70, width/height, 0.1, 1000 );
     camera.position.set(amount + 15, amount + 15, amount + 15);
     camera.lookAt(0, 0, 0);
+
     //Initialize the renderer
     renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -34,6 +38,15 @@ function initialize() {
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
+
+     //Orbit Controls
+     orbitControls = new OrbitControls(camera, renderer.domElement);
+     orbitControls.listenToKeyEvents(window)
+     orbitControls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+     orbitControls.enableZoom = true;
+     orbitControls.enablePan = false;
+     orbitControls.minDistance = 10;
+     orbitControls.maxDistance = 100;
 
     //Creating axes helpers...
     const axes = new THREE.AxesHelper(10);
@@ -87,7 +100,6 @@ function initialize() {
                 
                 mesh.setMatrixAt(i, matrix);
                 mesh.setColorAt(i, color);
-                objects.push(mesh.children[i]);
                 i++;
             }
         }
@@ -97,14 +109,11 @@ function initialize() {
     //#endregion
 
     //GUI Handling...
-    const gui = new dat.GUI();
+    
     const options = 
     {
         objectColor : '#6C0BA9',
-        positionX : 0,
-        positionY : 0,
-        positionZ : 0,
-        speed: 0.01,
+        speed: 0.01
     };
 
     const geometryOptions = 
@@ -133,10 +142,6 @@ function initialize() {
     var generalOptions = gui.addFolder('General Options');
     generalOptions.addColor(options, 'objectColor').onChange(function(e) { mesh.material.color.set(e); });
     generalOptions.add(options, 'speed', 0, 1).onChange(function(e) { speed = e; });
-    var positionFolder = gui.addFolder('Mesh Position')
-    positionFolder.add(options, 'positionX', -100.0, 100.0).onChange(function(e) { mesh.position.x = e; });
-    positionFolder.add(options, 'positionY', -100.0, 100.0).onChange(function(e) { mesh.position.y = e; });
-    positionFolder.add(options, 'positionZ', -100.0, 100.0).onChange(function(e) { mesh.position.z = e; });
     var lightSettings = gui.addFolder('Lighting Settings');
     lightSettings.add(lightingOptions, 'spotlightRadius', 0 , 20).onChange(function(e) {
         spotLight.angle = Math.PI / e;
@@ -153,50 +158,23 @@ function initialize() {
     lightSettings.add(lightingOptions, 'spotlightIntensity', 0.0, 1.0).onChange(function(e) { spotLight.intensity = e; });
     lightSettings.add(lightingOptions, 'directionalLightIntensity', 0.0, 1.0).onChange(function(e) { directionalLight1.intensity = e; });
     var geometrySettings = gui.addFolder('Geometry Settings');
-    geometrySettings.add(geometryOptions, 'multi').onChange(function(e) {
-        showMultiMesh = e;
-        if(e) {
-            showCube = false;
-            showSphere = false;
-        }
-    });
-    geometrySettings.add(geometryOptions, 'cube').onChange(function(e) {
-        showCube = e;
-        if(e) {
-            showMultiMesh = false;
-            showSphere = false;
-        }
-        geometrySettings.set
-    });
-    geometrySettings.add(geometryOptions, 'sphere').onChange(function(e) {
-        showSphere = e;
-        if(e) {
-            showMultiMesh = false;
-            showCube = false;
-        }
-    });
+    geometrySettings.add(geometryOptions, 'multi').onChange(function(e) { setGeometryToShow(1, e); });
+    geometrySettings.add(geometryOptions, 'cube').onChange(function(e) { setGeometryToShow(2, e); });
+    geometrySettings.add(geometryOptions, 'sphere').onChange(function(e) { setGeometryToShow(3, e); });
     window.addEventListener('resize', onWindowResize);
-    document.addEventListener('mouseover', onMouseMove);
     render();
 };
 
-
+function setGeometryToShow(geometryIndexToShow, create) {
+    showMultiMesh = geometryIndexToShow === 1;
+    showCube = geometryIndexToShow === 2;
+    showSphere = geometryIndexToShow === 3;
+    createdMesh = !create;
+}
 
 function animate(time) {
     requestAnimationFrame(animate);
-    // orbitControls.update();
-    if(showMultiMesh) {
-        raycaster.setFromCamera( mouse, camera);
-        const intersection = raycaster.intersectObject ( mesh );
-        if(intersection.length > 0) {
-            const instanceId = intersection[0].instanceId;
-            mesh.getColorAt(instanceId, color);
-            if(color.equals(white)) {
-                mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
-                mesh.instanceColor.needsUpdate = true;
-            }
-        }
-    }
+    orbitControls.update();
     handleDifferentGeometry(); 
     step += speed;
     mesh.position.y = 10 * Math.abs(Math.sin(step));
@@ -206,7 +184,7 @@ function animate(time) {
 function handleDifferentGeometry()
 {
     if(showMultiMesh) {
-        if(!mesh.InstancedMesh) {
+        if(!createdMesh) {
             scene.remove(mesh);
             const geometry = new THREE.SphereGeometry(0.5, 64, 64);
             mesh = new THREE.InstancedMesh(geometry, material, count);
@@ -220,31 +198,33 @@ function handleDifferentGeometry()
                         
                         mesh.setMatrixAt(i, matrix);
                         mesh.setColorAt(i, color);
-                        objects.push(mesh.children[i]);
                         i++;
                     }
                 }
             }
             mesh.castShadow = true;
             scene.add(mesh);
+            createdMesh = true;
         }
     }
 
     if(showCube) {
-        if(!mesh.BoxGeometry) {
+        if(!createdMesh) {
             scene.remove(mesh);
             const cubeGeometry = new THREE.BoxGeometry(5, 5, 5);
             mesh = new THREE.Mesh(cubeGeometry, material);
             scene.add(mesh);
+            createdMesh = true;
         }
     }
 
     if(showSphere) {
-        if(!mesh.sphereGeometry) {
+        if(!createdMesh) {
             scene.remove(mesh);
             const sphereGeometry = new THREE.SphereGeometry(10, 64, 64);
             mesh = new THREE.Mesh(sphereGeometry, material);
             scene.add(mesh);
+            createdMesh = true;
         }
     }
 };
@@ -253,14 +233,40 @@ function render() {
     renderer.render(scene, camera);
 };
 
-function onMouseMove( event ) {
-    event.preventDefault();
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-}
-
 function onWindowResize() {
     camera.aspect =  window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function updatedSettings() {
+    const positionSettings = {
+        positionX: 0,
+        positionY: 0,
+        positionZ: 0,
+        scaleX: 0,
+        scaleY: 0,
+        scaleZ: 0,
+        rotationX:0,
+        rotationY:0,
+        rotationZ: 0,
+        resetPosition: false,
+        resetScale: false,
+        resetRotation: false
+    }
+    var positionFolder = gui.addFolder('Mesh Transform');
+    positionFolder.add(positionSettings, 'positionX', -100.0, 100.0).onChange(function(e) { mesh.position.x = e; });
+    positionFolder.add(positionSettings, 'positionY', -100.0, 100.0).onChange(function(e) { mesh.position.y = e; });
+    positionFolder.add(positionSettings, 'positionZ', -100.0, 100.0).onChange(function(e) { mesh.position.z = e; }); 
+    positionFolder.add(positionSettings, 'scaleX', 0.0, 2.0).onChange(function(e) { mesh.scale.x = e; });
+    positionFolder.add(positionSettings, 'scaleY', 0.0, 2.0).onChange(function(e){ mesh.scale.y = e });
+    positionFolder.add(positionSettings, 'scaleZ', 0.0, 2.0).onChange(function(e){ mesh.scale.z = e });
+    positionFolder.add(positionSettings, 'rotationX', 0, Math.PI).onChange(function(e) { mesh.rotation.x = e; });
+    positionFolder.add(positionSettings, 'rotationY', 0, Math.PI).onChange(function(e){ mesh.rotation.y = e });
+    positionFolder.add(positionSettings, 'rotationZ',  0, Math.PI).onChange(function(e){ mesh.rotation.z = e });
+    positionFolder.add(positionSettings, 'resetPosition').onChange(function(e) {
+        if(e) { mesh.position.set(0, 0, 0); }
+    });
+    positionFolder.add(positionSettings, 'resetScale').onChange(function(e){ if(e) { mesh.scale.set(1, 1, 1) } });
+    positionFolder.add(positionSettings, 'resetRotation').onChange(function(e){ if(e) { mesh.rotation.set(0, 0, 0) } });
 }
