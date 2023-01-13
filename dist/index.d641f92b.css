@@ -1,0 +1,19 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #000;
+  overflow-x: hidden;
+}
+
+#threejs-canvas {
+  height: 100vh;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  right: 0;
+}
+
+/*# sourceMappingURL=index.d641f92b.css.map */

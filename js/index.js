@@ -1,7 +1,7 @@
 import { OrbitControls } from "./OrbitControls.js";
-
-let camera,scene, renderer;
-let directionalLight1,spotLight, orbitControls,ambientLight; 
+let camera, scene, renderer;
+let orbit;
+let directionalLight1, spotLight, ambientLight; 
 let showCube = false, showSphere = false, showMultiMesh = true;
 const material = new THREE.MeshToonMaterial( {color: 0x6C0BA9} );
 let mesh;
@@ -19,35 +19,25 @@ updatedSettings();
 
 
 function initialize() {
-    //Create a scene...
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    scene = new THREE.Scene(); 
-    //scene.fog = new THREE.Fog(0XFFFFF, 0, 150);
-    scene.fog = new THREE.FogExp2(0xFFFFFF, 0.01);
-    //Create a camera and define the perspective -> Orthographic or perspective
-    camera = new THREE.PerspectiveCamera( 70, width/height, 0.1, 1000 );
-    camera.position.set(amount + 15, amount + 15, amount + 15);
-    camera.lookAt(0, 0, 0);
-
     //Initialize the renderer
     renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
+        antialias: true
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
-
-     //Orbit Controls
-     orbitControls = new OrbitControls(camera, renderer.domElement);
-     orbitControls.listenToKeyEvents(window)
-     orbitControls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-     orbitControls.enableZoom = true;
-     orbitControls.enablePan = false;
-     orbitControls.minDistance = 10;
-     orbitControls.maxDistance = 100;
-
+    //Create a scene...
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    scene = new THREE.Scene(); 
+    scene.background = new THREE.Color(0xcccccc);
+    //scene.fog = new THREE.Fog(0XFFFFF, 0, 150);
+    scene.fog = new THREE.FogExp2(0xFFFFFF, 0.01);
+    //Create a camera and define the perspective -> Orthographic or perspective
+    camera = new THREE.PerspectiveCamera( 70, width/height, 0.1, 1000 );
+    
+    camera.position.set(30, 30, 30);
+    //Orbit Controls
     //Creating axes helpers...
     const axes = new THREE.AxesHelper(10);
     scene.add(axes);
@@ -83,7 +73,7 @@ function initialize() {
     
     //Create a number of objects from the same geometry...
     const planeGeometry = new THREE.PlaneGeometry(100, 100, 50, 50);
-    const phongMaterial = new THREE.MeshLambertMaterial(white);
+    const phongMaterial = new THREE.MeshLambertMaterial({ color:0xaaaaaa });
     const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
     planeMesh.receiveShadow = true;
     planeMesh.rotation.x = -0.5 * Math.PI;
@@ -125,44 +115,47 @@ function initialize() {
 
     const lightingOptions = 
     {
-        spotlightRadius : 9.0,
-        spotlightPositionX : 0,
-        spotlightPositionY : 0,
-        spotlightPositionZ : 0,
-        directionalLightPositionX : 0,
-        directionalLightPositionY : 0,
-        directionalLightPositionZ : 0,
-        directionalLightRotationX : 0,
-        directionalLightRotationY : 0,
-        directionalLightRotationZ : 0,
-        directionalLightIntensity : 0,
-        spotlightIntensity : 0.0
+        spotlight_Radius : 9.0,
+        spotlight_Position_X : 0,
+        spotlight_Position_Y : 0,
+        spotlight_Position_Z : 0,
+        directional_Light_Position_X : 0,
+        directional_Light_Position_Y : 0,
+        directional_Light_Position_Z : 0,
+        directional_Light_Intensity : 0,
+        spotlight_Intensity : 0.0
     };
 
     var generalOptions = gui.addFolder('General Options');
     generalOptions.addColor(options, 'objectColor').onChange(function(e) { mesh.material.color.set(e); });
     generalOptions.add(options, 'speed', 0, 1).onChange(function(e) { speed = e; });
     var lightSettings = gui.addFolder('Lighting Settings');
-    lightSettings.add(lightingOptions, 'spotlightRadius', 0 , 20).onChange(function(e) {
+    lightSettings.add(lightingOptions, 'spotlight_Radius', 0 , 20).onChange(function(e) {
         spotLight.angle = Math.PI / e;
     });
-    lightSettings.add(lightingOptions, 'spotlightPositionX', -100.0, 100.0).onChange(function(e) { spotLight.position.x = e; });
-    lightSettings.add(lightingOptions, 'spotlightPositionY', -100.0, 100.0).onChange(function(e) { spotLight.position.y = e; });
-    lightSettings.add(lightingOptions, 'spotlightPositionZ', -100.0, 100.0).onChange(function(e) { spotLight.position.z = e; });
-    lightSettings.add(lightingOptions, 'directionalLightPositionX', -100.0, 100.0).onChange(function(e) { directionalLight1.position.x = e; });
-    lightSettings.add(lightingOptions, 'directionalLightPositionY', -100.0, 100.0).onChange(function(e) { directionalLight1.position.y = e; });
-    lightSettings.add(lightingOptions, 'directionalLightPositionZ', -100.0, 100.0).onChange(function(e) { directionalLight1.position.z = e; });
-    lightSettings.add(lightingOptions, 'directionalLightRotationX', 0, 360).onChange(function(e) { directionalLight1.rotation.x = e; });
-    lightSettings.add(lightingOptions, 'directionalLightRotationY', 0, 360).onChange(function(e) { directionalLight1.rotation.y = e; });
-    lightSettings.add(lightingOptions, 'directionalLightRotationZ', 0, 360).onChange(function(e) { directionalLight1.rotation.z = e; });
-    lightSettings.add(lightingOptions, 'spotlightIntensity', 0.0, 1.0).onChange(function(e) { spotLight.intensity = e; });
-    lightSettings.add(lightingOptions, 'directionalLightIntensity', 0.0, 1.0).onChange(function(e) { directionalLight1.intensity = e; });
+    lightSettings.add(lightingOptions, 'spotlight_Position_X', -100.0, 100.0).onChange(function(e) { spotLight.position.x = e; });
+    lightSettings.add(lightingOptions, 'spotlight_Position_Y', -100.0, 100.0).onChange(function(e) { spotLight.position.y = e; });
+    lightSettings.add(lightingOptions, 'spotlight_Position_Z', -100.0, 100.0).onChange(function(e) { spotLight.position.z = e; });
+    lightSettings.add(lightingOptions, 'directional_Light_Position_X', -100.0, 100.0).onChange(function(e) { directionalLight1.position.x = e; });
+    lightSettings.add(lightingOptions, 'directional_Light_Position_Y', -100.0, 100.0).onChange(function(e) { directionalLight1.position.y = e; });
+    lightSettings.add(lightingOptions, 'directional_Light_Position_Z', -100.0, 100.0).onChange(function(e) { directionalLight1.position.z = e; });
+    lightSettings.add(lightingOptions, 'spotlight_Intensity', 0.0, 1.0).onChange(function(e) { spotLight.intensity = e; });
+    lightSettings.add(lightingOptions, 'directional_Light_Intensity', 0.0, 1.0).onChange(function(e) { directionalLight1.intensity = e; });
     var geometrySettings = gui.addFolder('Geometry Settings');
     geometrySettings.add(geometryOptions, 'multi').onChange(function(e) { setGeometryToShow(1, e); });
     geometrySettings.add(geometryOptions, 'cube').onChange(function(e) { setGeometryToShow(2, e); });
     geometrySettings.add(geometryOptions, 'sphere').onChange(function(e) { setGeometryToShow(3, e); });
+    
+    orbit = new OrbitControls(camera, renderer.domElement);
+    orbit.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+    orbit.dampingFactor = 0.05;
+    orbit.screenSpacePanning = false;
+    //orbit.enableZoom = true;
+    orbit.enablePan = false;
+    orbit.minDistance = 10;
+    orbit.maxDistance = 100; 
+
     window.addEventListener('resize', onWindowResize);
-    render();
 };
 
 function setGeometryToShow(geometryIndexToShow, create) {
@@ -172,9 +165,8 @@ function setGeometryToShow(geometryIndexToShow, create) {
     createdMesh = !create;
 }
 
-function animate(time) {
+function animate() {
     requestAnimationFrame(animate);
-    orbitControls.update();
     handleDifferentGeometry(); 
     step += speed;
     mesh.position.y = 10 * Math.abs(Math.sin(step));
