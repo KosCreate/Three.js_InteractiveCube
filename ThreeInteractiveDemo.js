@@ -117,6 +117,11 @@ gltfLoader.load(spaceShip.href, function(gltf) {
     scene.add(model);
     model.position.set(-12, 10, 10);
     model.scale.set(0.1, 0.1, 0.1);
+    model.traverse(function(node) {
+        if(node.isMesh) {
+            node.castShadow = true;
+        }
+    });
 });
 //#endregion
 
