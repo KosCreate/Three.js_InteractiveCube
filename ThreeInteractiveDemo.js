@@ -3,7 +3,7 @@ import { GUI } from 'https://unpkg.com/dat.gui@0.7.9/build/dat.gui.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const spaceShip = new URL("/models/Spaceship/scene.gltf", import.meta.url);
+const spaceShip = new URL("./models/Spaceship/scene.gltf", import.meta.url);
 
 //#region Initialization
 /* Creating the render */
