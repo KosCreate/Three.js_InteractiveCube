@@ -5,7 +5,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const spaceShip = new URL("./models/Spaceship/scene.gltf", import.meta.url);
-const castleURL = new URL("./models/castle/scene.gltf", import.meta.url);
 
 //#region Initialization
 /* Creating the render */
@@ -72,9 +71,9 @@ createDirectionalLight(THREE.Color.NAMES.whitesmoke, 1);
 /*SPOTLIGHT */
 const spotlights = [];
 const spotlightHelpers = [];
-createSpotlight(THREE.Color.NAMES.aqua, new THREE.Vector3(0, 20, 0), 1, 1, 0.5, true);
-createSpotlight(THREE.Color.NAMES.aqua, new THREE.Vector3(-10, 20, 0), 1, 1, 0.5, true);
-createSpotlight(THREE.Color.NAMES.aqua, new THREE.Vector3(10, 20, 0), 1, 1, 0.5, true);
+createSpotlight(THREE.Color.NAMES.whitesmoke, new THREE.Vector3(0, 30, 0), 1, 1, 0.5, true);
+createSpotlight(THREE.Color.NAMES.whitesmoke, new THREE.Vector3(-10, 30, 0), 1, 1, 0.5, true);
+createSpotlight(THREE.Color.NAMES.whitesmoke, new THREE.Vector3(10, 30, 0), 1, 1, 0.5, true);
 
 /*AMBIENT LIGHT */
 createAmbientLight(THREE.Color.NAMES.darkgray);
@@ -148,8 +147,8 @@ function createPlane() {
 
 let loadedModel;
 const gltfLoader = new GLTFLoader();
-gltfLoader.load(castleURL.href, function(gltf) {
-    modelLoadingHandling(gltf, new THREE.Vector3(0, 5, 0), new THREE.Vector3(3, 3, 3));
+gltfLoader.load(spaceShip.href, function(gltf) {
+    modelLoadingHandling(gltf, new THREE.Vector3(10, 20, 0), new THREE.Vector3(0.05, 0.05, 0.05));
 });
 //#endregion
 
@@ -201,12 +200,6 @@ gui.add(spotLightOptions, "intensity", 0.1, 1).onChange(function(e) {
     }); 
 });
 
-gui.addColor(spotLightOptions, "spotlightColor").onChange(function(color) {
-    spotlights.forEach(function(node){
-        node.color = color;
-    }); 
-});
-
 //#endregion
 
 //#region Raycasting
@@ -228,7 +221,7 @@ let draggableObject;
 //#region MAIN RENDER LOOP
 let step = 0;
 function animate(time) {
-    //moveAnimateModel();
+    moveAnimateModel();
 
     updateSpotlight();
     renderer.render(scene, camera);
